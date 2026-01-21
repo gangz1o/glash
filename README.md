@@ -9,6 +9,21 @@
 - ✅ 预打包 GeoIP 数据库，无需运行时下载
 - ✅ 支持 amd64 / arm64 架构
 
+## 支持的协议
+
+| 协议 | 说明 |
+| ---- | ---- |
+| Shadowsocks (SS) | 经典轻量级加密代理 |
+| VMess | V2Ray 原生协议 |
+| VLESS | V2Ray 轻量协议，性能更优 |
+| Trojan | 基于 TLS 的隐蔽协议 |
+| Hysteria | 基于 QUIC 的高速协议 |
+| Hysteria2 | Hysteria 第二代，更快更稳 |
+| TUIC | 基于 QUIC 的多路复用协议 |
+| WireGuard | 现代化 VPN 协议 |
+| HTTP | HTTP/HTTPS 代理 |
+| SOCKS5 | 通用 SOCKS5 代理 |
+
 ## 快速开始
 
 ### Docker Run
