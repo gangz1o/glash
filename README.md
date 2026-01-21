@@ -106,3 +106,15 @@ rules:
 - **Mihomo**: v1.19.18
 - **MetacubexD**: v1.186.1
 - **架构**: linux/amd64, linux/arm64
+
+## 致谢
+
+感谢以下开源项目：
+
+- [Mihomo](https://github.com/MetaCubeX/mihomo) - 强大的代理内核
+- [MetacubexD](https://github.com/MetaCubeX/metacubexd) - 现代化 Web Dashboard
+- [meta-rules-dat](https://github.com/MetaCubeX/meta-rules-dat) - GeoIP & GeoSite 数据库
+
+## License
+
+MIT
