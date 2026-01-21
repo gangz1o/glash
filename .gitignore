@@ -1,0 +1,10 @@
+# 敏感配置文件（包含节点信息）
+config.yaml
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,43 @@
+services:
+  glash:
+    image: gangz1o/glash:latest
+    container_name: glash
+    restart: unless-stopped
+
+    # 网络模式: 使用 host 模式获得更好的性能，或使用 bridge 模式隔离
+    # network_mode: host
+
+    ports:
+      - '7890:7890' # HTTP 代理
+      - '7891:7891' # SOCKS5 代理
+      - '7892:7892' # 混合代理 (HTTP + SOCKS5)
+      - '9090:9090' # API 控制器 & Dashboard
+
+    volumes:
+      # 挂载配置文件
+      - ./config.yaml:/root/.config/mihomo/config.yaml:ro
+      # 可选：挂载整个配置目录（用于存储缓存、GeoIP 数据库等）
+      # - ./config:/root/.config/mihomo
+
+    environment:
+      - TZ=Asia/Shanghai
+
+    # 如果需要 TUN 模式，取消下面的注释
+    # cap_add:
+    #   - NET_ADMIN
+    # devices:
+    #   - /dev/net/tun:/dev/net/tun
+
+    # 健康检查
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:9090/version']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'

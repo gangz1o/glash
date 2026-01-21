@@ -1,0 +1,158 @@
+# glash 示例配置文件
+# 基于 Mihomo (Clash Meta) 内核
+# 文档: https://wiki.metacubex.one/
+
+# ==================== 基础配置 ====================
+# HTTP 代理端口
+port: 7890
+# SOCKS5 代理端口
+socks-port: 7891
+# 混合代理端口 (HTTP + SOCKS5)
+mixed-port: 7892
+# 允许局域网连接
+allow-lan: true
+# 绑定地址
+bind-address: '*'
+# 运行模式: rule / global / direct
+mode: rule
+# 日志级别: silent / error / warning / info / debug
+log-level: info
+# IPv6 支持
+ipv6: false
+
+# ==================== API 控制器 ====================
+# 外部控制器 (Dashboard 需要此配置)
+# 注意: Docker 中使用 0.0.0.0 以允许外部访问
+external-controller: 0.0.0.0:9090
+# API 密钥 (建议设置)
+secret: 'your-secret-here'
+# 外部 UI 目录 (Docker 中已内置，无需配置)
+# external-ui: /app/ui
+
+# ==================== DNS 配置 ====================
+dns:
+  enable: true
+  listen: 0.0.0.0:53
+  ipv6: false
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter:
+    - '*.lan'
+    - '*.local'
+    - '*.localhost'
+    - localhost.ptlogin2.qq.com
+  nameserver:
+    - https://doh.pub/dns-query
+    - https://dns.alidns.com/dns-query
+  fallback:
+    - https://1.1.1.1/dns-query
+    - https://8.8.8.8/dns-query
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    ipcidr:
+      - 240.0.0.0/4
+
+# ==================== 代理节点 ====================
+proxies:
+  # VMess 示例
+  - name: '示例节点-VMess'
+    type: vmess
+    server: example.com
+    port: 443
+    uuid: your-uuid-here
+    alterId: 0
+    cipher: auto
+    tls: true
+    skip-cert-verify: false
+    network: ws
+    ws-opts:
+      path: /path
+      headers:
+        Host: example.com
+
+  # Shadowsocks 示例
+  - name: '示例节点-SS'
+    type: ss
+    server: example.com
+    port: 8388
+    cipher: aes-256-gcm
+    password: your-password-here
+
+  # Trojan 示例
+  - name: '示例节点-Trojan'
+    type: trojan
+    server: example.com
+    port: 443
+    password: your-password-here
+    sni: example.com
+    skip-cert-verify: false
+
+# ==================== 代理组 ====================
+proxy-groups:
+  - name: 🚀 节点选择
+    type: select
+    proxies:
+      - ♻️ 自动选择
+      - DIRECT
+      - 示例节点-VMess
+      - 示例节点-SS
+      - 示例节点-Trojan
+
+  - name: ♻️ 自动选择
+    type: url-test
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 50
+    proxies:
+      - 示例节点-VMess
+      - 示例节点-SS
+      - 示例节点-Trojan
+
+  - name: 🎯 全球直连
+    type: select
+    proxies:
+      - DIRECT
+      - 🚀 节点选择
+
+  - name: 🛑 广告拦截
+    type: select
+    proxies:
+      - REJECT
+      - DIRECT
+
+  - name: 🐟 漏网之鱼
+    type: select
+    proxies:
+      - 🚀 节点选择
+      - 🎯 全球直连
+      - ♻️ 自动选择
+
+# ==================== 分流规则 ====================
+rules:
+  # 直连规则
+  - DOMAIN-SUFFIX,cn,🎯 全球直连
+  - DOMAIN-KEYWORD,baidu,🎯 全球直连
+  - DOMAIN-KEYWORD,alibaba,🎯 全球直连
+  - DOMAIN-KEYWORD,tencent,🎯 全球直连
+
+  # 广告拦截
+  - DOMAIN-KEYWORD,adservice,🛑 广告拦截
+  - DOMAIN-SUFFIX,googlesyndication.com,🛑 广告拦截
+
+  # 代理规则
+  - DOMAIN-SUFFIX,google.com,🚀 节点选择
+  - DOMAIN-SUFFIX,youtube.com,🚀 节点选择
+  - DOMAIN-SUFFIX,github.com,🚀 节点选择
+  - DOMAIN-SUFFIX,twitter.com,🚀 节点选择
+  - DOMAIN-SUFFIX,telegram.org,🚀 节点选择
+
+  # GeoIP 规则
+  - GEOIP,LAN,🎯 全球直连
+  - GEOIP,CN,🎯 全球直连
+
+  # 兜底规则
+  - MATCH,🐟 漏网之鱼
