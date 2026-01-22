@@ -60,9 +60,11 @@ services:
 你的 `config.yaml` 必须包含以下配置才能正常使用 Dashboard：
 
 ```yaml
-# 允许外部访问 API（必须是 0.0.0.0）
+# 允许外部访问 API
 external-controller: 0.0.0.0:9090
-# 密钥（可为空）
+或者是
+external-controller::9090
+# 密钥（用于登录dashboard ，可不填，建议填上，提高安全性）
 secret: ''
 ```
 
