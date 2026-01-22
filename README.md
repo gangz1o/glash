@@ -39,6 +39,18 @@ docker run -d \
   gangz1o/glash:latest
 ```
 
+### 指定架构下载
+
+默认自动匹配当前平台，如需指定架构：
+
+```bash
+# x86_64 / amd64
+docker pull --platform linux/amd64 gangz1o/glash:latest
+
+# ARM64 (Apple Silicon / ARM 服务器)
+docker pull --platform linux/arm64 gangz1o/glash:latest
+```
+
 ### Docker Compose
 
 ```yaml
