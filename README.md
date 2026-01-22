@@ -2,6 +2,7 @@
 
 🚀 基于最新 **Mihomo v1.19.18** 内核 + **MetacubexD** Dashboard 的 Clash Docker 镜像
 
+
 ## 特性
 
 - ✅ Mihomo (Clash Meta) v1.19.18 内核
@@ -92,6 +93,7 @@ secret: ''
 ## Dashboard 访问
 
 启动后访问：http://127.0.0.1:9090/ui/
+![h1FjVgrMZpnADJ70Tp5wjzp3KloXMkvB.webp](https://cdn.nodeimage.com/i/h1FjVgrMZpnADJ70Tp5wjzp3KloXMkvB.webp)
 
 首次访问需要配置：
 
@@ -129,6 +131,12 @@ rules:
   - GEOIP,CN,DIRECT
   - MATCH,🚀 节点选择
 ```
+## 界面一览
+![NUhSXxFpzP5AkQgOM0F5SaCOYEdUOMpG.webp](https://cdn.nodeimage.com/i/NUhSXxFpzP5AkQgOM0F5SaCOYEdUOMpG.webp)
+![dIMBzYuhfUcBZ9pml6p8SK6dCK7fcZAK.webp](https://cdn.nodeimage.com/i/dIMBzYuhfUcBZ9pml6p8SK6dCK7fcZAK.webp)
+![qNyg0qN1s0yAKK2VDwmzUFznng39WrHN.webp](https://cdn.nodeimage.com/i/qNyg0qN1s0yAKK2VDwmzUFznng39WrHN.webp)
+![LYlfD2Av4Pryg1y3bcBCjrQZ7NQdjkSU.webp](https://cdn.nodeimage.com/i/LYlfD2Av4Pryg1y3bcBCjrQZ7NQdjkSU.webp)
+![hNFus4r6SRr5gP7sz0oZcgcEITN9NaZO.webp](https://cdn.nodeimage.com/i/hNFus4r6SRr5gP7sz0oZcgcEITN9NaZO.webp)
 
 ## 版本信息
 
