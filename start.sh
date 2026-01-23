@@ -25,26 +25,35 @@ download_subscription() {
     local url="$1"
     local output="$2"
     local temp_file="${output}.tmp"
+    local max_retries=3
+    local retry_delay=5
     
     log_info "正在从订阅地址下载配置..."
     
-    # 下载到临时文件
-    if curl -fsSL --connect-timeout 30 --max-time 60 -o "${temp_file}" "${url}"; then
-        # 验证下载的文件是否为有效的 YAML（至少检查文件非空且包含关键字）
-        if [ -s "${temp_file}" ] && grep -qE "^(port|proxies|proxy-groups):" "${temp_file}"; then
-            mv "${temp_file}" "${output}"
-            log_info "订阅配置下载成功"
-            return 0
+    # 重试机制
+    for ((i=1; i<=max_retries; i++)); do
+        log_info "下载尝试 $i/$max_retries ..."
+        
+        # 下载到临时文件（增加超时时间到 300 秒，添加重试和断点续传支持）
+        if curl -fsSL --connect-timeout 60 --max-time 300 --retry 2 --retry-delay 3 -o "${temp_file}" "${url}"; then
+            # 验证下载的文件是否为有效的 YAML（至少检查文件非空且包含关键字）
+            if [ -s "${temp_file}" ] && grep -qE "^(port|proxies|proxy-groups):" "${temp_file}"; then
+                mv "${temp_file}" "${output}"
+                log_info "订阅配置下载成功"
+                return 0
+            else
+                log_error "下载的配置文件无效或格式不正确"
+                rm -f "${temp_file}"
+            fi
         else
-            log_error "下载的配置文件无效或格式不正确"
+            log_warn "下载失败，$retry_delay 秒后重试..."
             rm -f "${temp_file}"
-            return 1
+            sleep "${retry_delay}"
         fi
-    else
-        log_error "订阅配置下载失败"
-        rm -f "${temp_file}"
-        return 1
-    fi
+    done
+    
+    log_error "订阅配置下载失败（已重试 $max_retries 次）"
+    return 1
 }
 
 # 更新配置文件中的 secret
