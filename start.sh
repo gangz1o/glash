@@ -201,6 +201,11 @@ fi
 
 log_info "========== glash 启动 =========="
 
+# 清理环境变量中的引号（用户可能在 docker-compose 中错误添加了引号）
+SUB_URL=$(echo "${SUB_URL}" | sed "s/^['\"]//;s/['\"]$//")
+SECRET=$(echo "${SECRET}" | sed "s/^['\"]//;s/['\"]$//")
+SUB_CRON=$(echo "${SUB_CRON}" | sed "s/^['\"]//;s/['\"]$//")
+
 # 确保配置目录存在
 mkdir -p "${CONFIG_DIR}"
 
