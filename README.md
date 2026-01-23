@@ -9,6 +9,9 @@
 - ✅ MetacubexD Web Dashboard 内置
 - ✅ 预打包 GeoIP 数据库，无需运行时下载
 - ✅ 支持 amd64 / arm64 架构
+- ✅ **订阅功能**：支持远程订阅链接自动下载配置
+- ✅ **自动更新**：支持定时自动更新订阅并重启生效
+- ✅ **容错处理**：订阅下载失败时自动回退到本地配置
 
 ## 支持的协议
 
@@ -66,6 +69,87 @@ services:
       - '9090:9090' # Dashboard
     volumes:
       - ./config.yaml:/root/.config/mihomo/config.yaml:ro
+```
+
+## 订阅功能
+
+glash 支持通过订阅链接自动下载和更新配置文件，无需手动维护 `config.yaml`。
+
+### 环境变量
+
+| 变量 | 说明 | 示例 |
+| ---- | ---- | ---- |
+| `SUB_URL` | 订阅地址，支持返回 Clash 配置的链接 | `https://example.com/sub` |
+| `SUB_CRON` | 自动更新的 cron 表达式 | `0 */6 * * *` |
+| `SECRET` | Dashboard 登录密钥，会自动注入配置 | `my-password` |
+
+### 使用订阅（推荐）
+
+```bash
+docker run -d \
+  --name glash \
+  --restart unless-stopped \
+  -p 7890:7890 \
+  -p 7891:7891 \
+  -p 9090:9090 \
+  -v /path/to/config:/root/.config/mihomo \
+  -e SUB_URL=https://your-subscription-url.com/config \
+  -e SUB_CRON="0 */6 * * *" \
+  -e SECRET=your-dashboard-password \
+  gangz1o/glash:latest
+```
+
+### Docker Compose（订阅模式）
+
+```yaml
+services:
+  glash:
+    image: gangz1o/glash:latest
+    container_name: glash
+    restart: unless-stopped
+    ports:
+      - '7890:7890'
+      - '7891:7891'
+      - '9090:9090'
+    volumes:
+      - ./config:/root/.config/mihomo
+    environment:
+      - TZ=Asia/Shanghai
+      - SUB_URL=https://your-subscription-url.com/config
+      - SUB_CRON=0 */6 * * *
+      - SECRET=your-dashboard-password
+```
+
+### 工作逻辑
+
+1. **启动时**：
+   - 如果设置了 `SUB_URL`，尝试从远程下载配置
+   - 下载成功：使用远程配置（覆盖本地已有配置）
+   - 下载失败：如果本地有配置则使用本地配置，否则退出
+
+2. **定时更新**：
+   - 如果设置了 `SUB_CRON`，按照 cron 表达式定时更新
+   - 更新成功后自动重启 mihomo 生效
+   - 更新失败时保持当前配置运行
+
+3. **SECRET 注入**：
+   - 如果设置了 `SECRET`，会自动写入配置文件的 `secret` 字段
+   - 方便统一管理 Dashboard 密码
+
+### 常用 Cron 表达式
+
+| 表达式 | 说明 |
+| ------ | ---- |
+| `0 */6 * * *` | 每 6 小时更新 |
+| `0 0 * * *` | 每天凌晨更新 |
+| `0 */12 * * *` | 每 12 小时更新 |
+| `*/30 * * * *` | 每 30 分钟更新 |
+| `0 8 * * *` | 每天早上 8 点更新 |
+
+### 查看订阅更新日志
+
+```bash
+docker exec glash cat /var/log/subscription.log
 ```
 
 ## ⚠️ 配置要求

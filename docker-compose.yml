@@ -14,13 +14,26 @@ services:
       - '9090:9090' # API 控制器 & Dashboard
 
     volumes:
-      # 挂载配置文件
-      - ./config.yaml:/root/.config/mihomo/config.yaml:ro
-      # 可选：挂载整个配置目录（用于存储缓存、GeoIP 数据库等）
-      # - ./config:/root/.config/mihomo
+      # 挂载配置目录（用于持久化配置和缓存）
+      # 使用订阅功能时，配置文件会自动下载到此目录
+      - ./config:/root/.config/mihomo
+      # 或者挂载单个配置文件（不使用订阅功能时）
+      # - ./config.yaml:/root/.config/mihomo/config.yaml:ro
 
     environment:
       - TZ=Asia/Shanghai
+      # ========== 订阅功能配置 ==========
+      # 订阅地址（设置后会自动下载配置文件）
+      # - SUB_URL=https://your-subscription-url.com/config
+      # 订阅自动更新 cron 表达式
+      # 常用格式:
+      #   - "0 */6 * * *"  每6小时更新一次
+      #   - "0 0 * * *"    每天凌晨更新
+      #   - "0 */12 * * *" 每12小时更新一次
+      #   - "*/30 * * * *" 每30分钟更新一次
+      # - SUB_CRON=0 */6 * * *
+      # Dashboard 登录密钥（会自动注入到配置文件中）
+      # - SECRET=your-secret-here
 
     # 如果需要 TUN 模式，取消下面的注释
     # cap_add:
@@ -41,3 +54,23 @@ services:
       options:
         max-size: '10m'
         max-file: '3'
+
+# ==================== 订阅模式示例 ====================
+# 使用订阅功能时的完整示例配置：
+#
+# services:
+#   glash:
+#     image: gangz1o/glash:latest
+#     container_name: glash
+#     restart: unless-stopped
+#     ports:
+#       - '7890:7890'
+#       - '7891:7891'
+#       - '9090:9090'
+#     volumes:
+#       - ./config:/root/.config/mihomo
+#     environment:
+#       - TZ=Asia/Shanghai
+#       - SUB_URL=https://your-subscription-url.com/config
+#       - SUB_CRON=0 */6 * * *
+#       - SECRET=your-dashboard-password

@@ -45,12 +45,14 @@ RUN mkdir -p /build/geodata && \
 FROM alpine:3.19
 
 LABEL maintainer="gangz1o"
-LABEL version="1.1.0"
-LABEL description="Clash Docker with Mihomo Core and MetacubexD Dashboard"
+LABEL version="1.2.0"
+LABEL description="Clash Docker with Mihomo Core and MetacubexD Dashboard - Subscription Support"
 
 # 安装运行时依赖
-RUN apk add --no-cache ca-certificates tzdata bash tini && \
-    mkdir -p /root/.config/mihomo /app/ui /app/geodata
+# curl: 用于下载订阅配置
+# sed/grep: 用于处理配置文件
+RUN apk add --no-cache ca-certificates tzdata bash tini curl sed grep && \
+    mkdir -p /root/.config/mihomo /app/ui /app/geodata /var/log
 
 # 从构建阶段复制文件
 COPY --from=builder /build/mihomo /app/mihomo
@@ -65,6 +67,13 @@ RUN chmod +x /app/start.sh
 # 设置环境变量
 ENV TZ=Asia/Shanghai
 ENV MIHOMO_CONFIG_DIR=/root/.config/mihomo
+# 订阅相关环境变量（可选）
+# SUB_URL: 订阅地址
+# SUB_CRON: 定时更新 cron 表达式，如 "0 */6 * * *" 表示每6小时更新
+# SECRET: Dashboard 登录密钥
+ENV SUB_URL=""
+ENV SUB_CRON=""
+ENV SECRET=""
 
 # 暴露端口
 # 7890: HTTP 代理
