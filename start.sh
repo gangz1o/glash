@@ -26,7 +26,7 @@ download_subscription() {
     local url="$1"
     local output="$2"
     local use_proxy="${3:-false}"
-    local temp_file="${output}.tmp"
+    local temp_file="/tmp/subscription_config.yaml"
     local max_retries=3
     local retry_delay=5
     local proxy_args=""
@@ -50,11 +50,13 @@ download_subscription() {
     for ((i=1; i<=max_retries; i++)); do
         log_info "下载尝试 $i/$max_retries ..."
         
-        # 下载到临时文件
+        # 下载到临时文件（使用 /tmp 避免文件被占用）
         if curl -fsSL ${proxy_args} --connect-timeout 60 --max-time 300 --retry 2 --retry-delay 3 -o "${temp_file}" "${url}"; then
             # 验证下载的文件是否为有效的 YAML
             if [ -s "${temp_file}" ] && grep -qE "^(port|proxies|proxy-groups):" "${temp_file}"; then
-                mv "${temp_file}" "${output}"
+                # 使用 cp 而不是 mv，避免跨文件系统问题和文件占用问题
+                cp -f "${temp_file}" "${output}"
+                rm -f "${temp_file}"
                 log_info "订阅配置下载成功"
                 return 0
             else
