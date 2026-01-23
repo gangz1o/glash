@@ -30,74 +30,13 @@
 
 ## 快速开始
 
-### Docker Run
+glash 支持两种使用模式：**订阅模式**（推荐）和**本地配置模式**。
 
-```bash
-docker run -d \
-  --name glash \
-  --restart unless-stopped \
-  -p 7890:7890 \
-  -p 7891:7891 \
-  -p 9090:9090 \
-  -v /path/to/config:/root/.config/mihomo \
-  gangz1o/glash:latest
-```
+### 模式一：订阅模式（推荐）
 
-### 指定架构下载
+自动从订阅链接下载配置，支持定时更新，无需手动维护配置文件。
 
-默认自动匹配当前平台，如需指定架构：
-
-```bash
-# x86_64 / amd64
-docker pull --platform linux/amd64 gangz1o/glash:latest
-
-# ARM64 (Apple Silicon / ARM 服务器)
-docker pull --platform linux/arm64 gangz1o/glash:latest
-```
-
-### Docker Compose
-
-```yaml
-services:
-  glash:
-    image: gangz1o/glash:latest
-    container_name: glash
-    restart: unless-stopped
-    ports:
-      - '7890:7890' # HTTP 代理
-      - '7891:7891' # SOCKS5 代理
-      - '9090:9090' # Dashboard
-    volumes:
-      - ./config:/root/.config/mihomo
-```
-
-## 订阅功能
-
-glash 支持通过订阅链接自动下载和更新配置文件，无需手动维护 `config.yaml`。
-
-> ⚠️ **重要提示**：使用订阅功能时，配置目录必须**可写**，不能使用 `:ro`（只读）模式挂载！
-> 
-> ```yaml
-> # ❌ 错误 - 只读模式无法更新订阅
-> - ./config.yaml:/root/.config/mihomo/config.yaml:ro
-> 
-> # ✅ 正确 - 挂载目录（推荐）
-> - ./config:/root/.config/mihomo
-> 
-> # ✅ 正确 - 挂载文件但可写
-> - ./config.yaml:/root/.config/mihomo/config.yaml
-> ```
-
-### 环境变量
-
-| 变量 | 说明 | 示例 |
-| ---- | ---- | ---- |
-| `SUB_URL` | 订阅地址，支持返回 Clash 配置的链接 | `https://example.com/sub` |
-| `SUB_CRON` | 自动更新的 cron 表达式 | `0 */6 * * *` |
-| `SECRET` | Dashboard 登录密钥，会自动注入配置 | `my-password` |
-| `DOWNLOAD_PROXY` | 首次下载订阅时使用的外部代理（可选） | `http://192.168.1.1:7890` |
-
-### 使用订阅（推荐）
+#### Docker Run
 
 ```bash
 docker run -d \
@@ -113,7 +52,7 @@ docker run -d \
   gangz1o/glash:latest
 ```
 
-### Docker Compose（订阅模式）
+#### Docker Compose
 
 ```yaml
 services:
@@ -122,9 +61,9 @@ services:
     container_name: glash
     restart: unless-stopped
     ports:
-      - '7890:7890'
-      - '7891:7891'
-      - '9090:9090'
+      - '7890:7890' # HTTP 代理
+      - '7891:7891' # SOCKS5 代理
+      - '9090:9090' # Dashboard
     volumes:
       - ./config:/root/.config/mihomo
     environment:
@@ -133,6 +72,66 @@ services:
       - SUB_CRON=0 */6 * * *
       - SECRET=your-dashboard-password
 ```
+
+### 模式二：本地配置模式
+
+使用本地 `config.yaml` 配置文件，适合手动管理配置的用户。
+
+#### Docker Run
+
+```bash
+docker run -d \
+  --name glash \
+  --restart unless-stopped \
+  -p 7890:7890 \
+  -p 7891:7891 \
+  -p 9090:9090 \
+  -v /path/to/config.yaml:/root/.config/mihomo/config.yaml:ro \
+  gangz1o/glash:latest
+```
+
+#### Docker Compose
+
+```yaml
+services:
+  glash:
+    image: gangz1o/glash:latest
+    container_name: glash
+    restart: unless-stopped
+    ports:
+      - '7890:7890' # HTTP 代理
+      - '7891:7891' # SOCKS5 代理
+      - '9090:9090' # Dashboard
+    volumes:
+      - ./config.yaml:/root/.config/mihomo/config.yaml:ro
+    environment:
+      - TZ=Asia/Shanghai
+```
+
+### 指定架构下载
+
+默认自动匹配当前平台，如需指定架构：
+
+```bash
+# x86_64 / amd64
+docker pull --platform linux/amd64 gangz1o/glash:latest
+
+# ARM64 (Apple Silicon / ARM 服务器)
+docker pull --platform linux/arm64 gangz1o/glash:latest
+```
+
+## 订阅功能详解
+
+> ⚠️ **重要提示**：使用订阅功能时，配置目录必须**可写**，不能使用 `:ro`（只读）模式挂载！
+
+### 环境变量
+
+| 变量 | 说明 | 示例 |
+| ---- | ---- | ---- |
+| `SUB_URL` | 订阅地址，支持返回 Clash 配置的链接 | `https://example.com/sub` |
+| `SUB_CRON` | 自动更新的 cron 表达式 | `0 */6 * * *` |
+| `SECRET` | Dashboard 登录密钥，会自动注入配置 | `my-password` |
+| `DOWNLOAD_PROXY` | 首次下载订阅时使用的外部代理（可选） | `http://192.168.1.1:7890` |
 
 ### 工作逻辑
 
