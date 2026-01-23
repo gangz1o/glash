@@ -39,7 +39,7 @@ docker run -d \
   -p 7890:7890 \
   -p 7891:7891 \
   -p 9090:9090 \
-  -v /path/to/config.yaml:/root/.config/mihomo/config.yaml:ro \
+  -v /path/to/config:/root/.config/mihomo \
   gangz1o/glash:latest
 ```
 
@@ -68,12 +68,25 @@ services:
       - '7891:7891' # SOCKS5 代理
       - '9090:9090' # Dashboard
     volumes:
-      - ./config.yaml:/root/.config/mihomo/config.yaml:ro
+      - ./config:/root/.config/mihomo
 ```
 
 ## 订阅功能
 
 glash 支持通过订阅链接自动下载和更新配置文件，无需手动维护 `config.yaml`。
+
+> ⚠️ **重要提示**：使用订阅功能时，配置目录必须**可写**，不能使用 `:ro`（只读）模式挂载！
+> 
+> ```yaml
+> # ❌ 错误 - 只读模式无法更新订阅
+> - ./config.yaml:/root/.config/mihomo/config.yaml:ro
+> 
+> # ✅ 正确 - 挂载目录（推荐）
+> - ./config:/root/.config/mihomo
+> 
+> # ✅ 正确 - 挂载文件但可写
+> - ./config.yaml:/root/.config/mihomo/config.yaml
+> ```
 
 ### 环境变量
 
