@@ -71,9 +71,11 @@ ENV MIHOMO_CONFIG_DIR=/root/.config/mihomo
 # SUB_URL: 订阅地址
 # SUB_CRON: 定时更新 cron 表达式，如 "0 */6 * * *" 表示每6小时更新
 # SECRET: Dashboard 登录密钥
+# DOWNLOAD_PROXY: 首次下载订阅时使用的代理（本地无配置时）
 ENV SUB_URL=""
 ENV SUB_CRON=""
 ENV SECRET=""
+ENV DOWNLOAD_PROXY=""
 
 # 暴露端口
 # 7890: HTTP 代理

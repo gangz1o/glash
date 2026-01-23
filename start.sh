@@ -21,12 +21,28 @@ log_error() {
 }
 
 # 下载订阅配置
+# 参数: url, output, [use_proxy: true/false]
 download_subscription() {
     local url="$1"
     local output="$2"
+    local use_proxy="${3:-false}"
     local temp_file="${output}.tmp"
     local max_retries=3
     local retry_delay=5
+    local proxy_args=""
+    
+    # 设置代理参数
+    if [ "${use_proxy}" = "true" ]; then
+        if [ -n "${DOWNLOAD_PROXY}" ]; then
+            proxy_args="--proxy ${DOWNLOAD_PROXY}"
+            log_info "使用外部代理下载: ${DOWNLOAD_PROXY}"
+        else
+            proxy_args="--proxy http://127.0.0.1:7890"
+            log_info "使用本地代理下载: http://127.0.0.1:7890"
+        fi
+    else
+        log_info "直连模式下载..."
+    fi
     
     log_info "正在从订阅地址下载配置..."
     
@@ -34,9 +50,9 @@ download_subscription() {
     for ((i=1; i<=max_retries; i++)); do
         log_info "下载尝试 $i/$max_retries ..."
         
-        # 下载到临时文件（增加超时时间到 300 秒，添加重试和断点续传支持）
-        if curl -fsSL --connect-timeout 60 --max-time 300 --retry 2 --retry-delay 3 -o "${temp_file}" "${url}"; then
-            # 验证下载的文件是否为有效的 YAML（至少检查文件非空且包含关键字）
+        # 下载到临时文件
+        if curl -fsSL ${proxy_args} --connect-timeout 60 --max-time 300 --retry 2 --retry-delay 3 -o "${temp_file}" "${url}"; then
+            # 验证下载的文件是否为有效的 YAML
             if [ -s "${temp_file}" ] && grep -qE "^(port|proxies|proxy-groups):" "${temp_file}"; then
                 mv "${temp_file}" "${output}"
                 log_info "订阅配置下载成功"
@@ -129,7 +145,7 @@ restart_mihomo() {
     log_info "mihomo 重启完成"
 }
 
-# 更新订阅（用于定时任务）
+# 更新订阅（用于定时任务，通过本地代理下载）
 update_subscription() {
     if [ -z "${SUB_URL}" ]; then
         log_warn "未设置 SUB_URL，跳过订阅更新"
@@ -138,7 +154,8 @@ update_subscription() {
     
     log_info "开始更新订阅..."
     
-    if download_subscription "${SUB_URL}" "${CONFIG_FILE}"; then
+    # 定时更新时使用本地代理
+    if download_subscription "${SUB_URL}" "${CONFIG_FILE}" "true"; then
         # 更新 secret
         if [ -n "${SECRET}" ]; then
             update_secret "${CONFIG_FILE}" "${SECRET}"
@@ -214,6 +231,7 @@ log_info "========== glash 启动 =========="
 SUB_URL=$(echo "${SUB_URL}" | sed "s/^['\"]//;s/['\"]$//")
 SECRET=$(echo "${SECRET}" | sed "s/^['\"]//;s/['\"]$//")
 SUB_CRON=$(echo "${SUB_CRON}" | sed "s/^['\"]//;s/['\"]$//")
+DOWNLOAD_PROXY=$(echo "${DOWNLOAD_PROXY}" | sed "s/^['\"]//;s/['\"]$//")
 
 # 确保配置目录存在
 mkdir -p "${CONFIG_DIR}"
@@ -232,18 +250,68 @@ if [ -n "${SUB_URL}" ]; then
     log_info "检测到订阅地址: ${SUB_URL}"
     
     if [ -f "${CONFIG_FILE}" ]; then
-        log_info "本地配置文件已存在，尝试更新..."
-        if download_subscription "${SUB_URL}" "${CONFIG_FILE}"; then
-            log_info "配置已从订阅更新"
+        # 本地有配置：先启动 mihomo，然后通过代理更新订阅
+        log_info "本地配置文件已存在"
+        
+        # 更新 secret（如果设置了 SECRET 环境变量）
+        if [ -n "${SECRET}" ]; then
+            update_secret "${CONFIG_FILE}" "${SECRET}"
+        fi
+        
+        # 确保 external-controller 配置正确
+        ensure_external_controller "${CONFIG_FILE}"
+        
+        # 先启动 mihomo
+        start_mihomo
+        
+        # 等待代理服务就绪
+        log_info "等待代理服务就绪..."
+        sleep 5
+        
+        # 通过本地代理更新订阅
+        log_info "尝试通过代理更新订阅..."
+        if download_subscription "${SUB_URL}" "${CONFIG_FILE}" "true"; then
+            log_info "订阅更新成功，重启以应用新配置..."
+            # 重新更新 secret
+            if [ -n "${SECRET}" ]; then
+                update_secret "${CONFIG_FILE}" "${SECRET}"
+            fi
+            ensure_external_controller "${CONFIG_FILE}"
+            restart_mihomo
         else
-            log_warn "订阅下载失败，使用本地已有配置"
+            log_warn "订阅更新失败，继续使用当前配置"
         fi
     else
-        log_info "本地配置文件不存在，从订阅下载..."
-        if ! download_subscription "${SUB_URL}" "${CONFIG_FILE}"; then
+        # 本地无配置：尝试直连下载，失败则尝试使用外部代理
+        log_info "本地配置文件不存在，尝试下载订阅..."
+        
+        # 先尝试直连
+        if download_subscription "${SUB_URL}" "${CONFIG_FILE}" "false"; then
+            log_info "直连下载成功"
+        elif [ -n "${DOWNLOAD_PROXY}" ]; then
+            # 直连失败，尝试使用外部代理
+            log_info "直连下载失败，尝试使用外部代理..."
+            if ! download_subscription "${SUB_URL}" "${CONFIG_FILE}" "true"; then
+                log_error "订阅下载失败（直连和代理均失败），无法启动"
+                log_error "请检查网络或设置 DOWNLOAD_PROXY 环境变量"
+                exit 1
+            fi
+        else
             log_error "订阅下载失败且本地无配置文件，无法启动"
+            log_error "提示：如果订阅地址需要代理访问，请设置 DOWNLOAD_PROXY 环境变量"
             exit 1
         fi
+        
+        # 更新 secret（如果设置了 SECRET 环境变量）
+        if [ -n "${SECRET}" ]; then
+            update_secret "${CONFIG_FILE}" "${SECRET}"
+        fi
+        
+        # 确保 external-controller 配置正确
+        ensure_external_controller "${CONFIG_FILE}"
+        
+        # 启动 mihomo
+        start_mihomo
     fi
 else
     log_info "未设置 SUB_URL，使用本地配置文件"
@@ -252,21 +320,21 @@ else
         log_error "请挂载配置文件或设置 SUB_URL 环境变量"
         exit 1
     fi
+    
+    # 更新 secret（如果设置了 SECRET 环境变量）
+    if [ -n "${SECRET}" ]; then
+        update_secret "${CONFIG_FILE}" "${SECRET}"
+    fi
+    
+    # 确保 external-controller 配置正确
+    ensure_external_controller "${CONFIG_FILE}"
+    
+    # 启动 mihomo
+    start_mihomo
 fi
-
-# 更新 secret（如果设置了 SECRET 环境变量）
-if [ -n "${SECRET}" ]; then
-    update_secret "${CONFIG_FILE}" "${SECRET}"
-fi
-
-# 确保 external-controller 配置正确
-ensure_external_controller "${CONFIG_FILE}"
 
 # 设置定时任务（如果设置了 SUB_CRON）
 setup_cron "${SUB_CRON}"
-
-# 启动 mihomo
-start_mihomo
 
 # 等待 mihomo 进程
 wait $(cat "${PID_FILE}")
