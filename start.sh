@@ -114,12 +114,23 @@ ensure_external_controller() {
 }
 
 # 启动 mihomo
+# 返回: 0=成功, 1=失败
 start_mihomo() {
     log_info "正在启动 mihomo..."
     /app/mihomo -d "${CONFIG_DIR}" -ext-ui "${UI_DIR}" &
     local pid=$!
     echo "${pid}" > "${PID_FILE}"
-    log_info "mihomo 已启动，PID: ${pid}"
+    
+    # 等待一小段时间检查进程是否存活
+    sleep 2
+    
+    if kill -0 "${pid}" 2>/dev/null; then
+        log_info "mihomo 已启动，PID: ${pid}"
+        return 0
+    else
+        log_error "mihomo 启动失败（可能是配置文件错误）"
+        return 1
+    fi
 }
 
 # 重启 mihomo
@@ -264,24 +275,61 @@ if [ -n "${SUB_URL}" ]; then
         ensure_external_controller "${CONFIG_FILE}"
         
         # 先启动 mihomo
-        start_mihomo
-        
-        # 等待代理服务就绪
-        log_info "等待代理服务就绪..."
-        sleep 5
-        
-        # 通过本地代理更新订阅
-        log_info "尝试通过代理更新订阅..."
-        if download_subscription "${SUB_URL}" "${CONFIG_FILE}" "true"; then
-            log_info "订阅更新成功，重启以应用新配置..."
-            # 重新更新 secret
-            if [ -n "${SECRET}" ]; then
-                update_secret "${CONFIG_FILE}" "${SECRET}"
+        if start_mihomo; then
+            # 启动成功，等待代理服务就绪
+            log_info "等待代理服务就绪..."
+            sleep 3
+            
+            # 通过本地代理更新订阅
+            log_info "尝试通过代理更新订阅..."
+            if download_subscription "${SUB_URL}" "${CONFIG_FILE}" "true"; then
+                log_info "订阅更新成功，重启以应用新配置..."
+                # 重新更新 secret
+                if [ -n "${SECRET}" ]; then
+                    update_secret "${CONFIG_FILE}" "${SECRET}"
+                fi
+                ensure_external_controller "${CONFIG_FILE}"
+                restart_mihomo
+            else
+                log_warn "订阅更新失败，继续使用当前配置"
             fi
-            ensure_external_controller "${CONFIG_FILE}"
-            restart_mihomo
         else
-            log_warn "订阅更新失败，继续使用当前配置"
+            # mihomo 启动失败（可能配置有错），尝试直连下载新配置
+            log_warn "mihomo 启动失败，本地配置可能有错误"
+            log_info "尝试直连下载新配置..."
+            
+            if download_subscription "${SUB_URL}" "${CONFIG_FILE}" "false"; then
+                log_info "直连下载成功，使用新配置启动..."
+                if [ -n "${SECRET}" ]; then
+                    update_secret "${CONFIG_FILE}" "${SECRET}"
+                fi
+                ensure_external_controller "${CONFIG_FILE}"
+                if ! start_mihomo; then
+                    log_error "使用新配置启动 mihomo 仍然失败，请检查订阅配置"
+                    exit 1
+                fi
+            elif [ -n "${DOWNLOAD_PROXY}" ]; then
+                log_info "直连失败，尝试使用外部代理下载..."
+                if download_subscription "${SUB_URL}" "${CONFIG_FILE}" "true"; then
+                    log_info "通过外部代理下载成功"
+                    if [ -n "${SECRET}" ]; then
+                        update_secret "${CONFIG_FILE}" "${SECRET}"
+                    fi
+                    ensure_external_controller "${CONFIG_FILE}"
+                    if ! start_mihomo; then
+                        log_error "使用新配置启动 mihomo 仍然失败，请检查订阅配置"
+                        exit 1
+                    fi
+                else
+                    log_error "无法下载新配置，且本地配置有错误，无法启动"
+                    log_error "请手动修复配置文件或检查网络"
+                    exit 1
+                fi
+            else
+                log_error "无法下载新配置，且本地配置有错误，无法启动"
+                log_error "提示：设置 DOWNLOAD_PROXY 环境变量以通过外部代理下载"
+                exit 1
+            fi
         fi
     else
         # 本地无配置：尝试直连下载，失败则尝试使用外部代理
@@ -313,7 +361,10 @@ if [ -n "${SUB_URL}" ]; then
         ensure_external_controller "${CONFIG_FILE}"
         
         # 启动 mihomo
-        start_mihomo
+        if ! start_mihomo; then
+            log_error "mihomo 启动失败，请检查下载的配置文件"
+            exit 1
+        fi
     fi
 else
     log_info "未设置 SUB_URL，使用本地配置文件"
@@ -332,7 +383,10 @@ else
     ensure_external_controller "${CONFIG_FILE}"
     
     # 启动 mihomo
-    start_mihomo
+    if ! start_mihomo; then
+        log_error "mihomo 启动失败，请检查配置文件"
+        exit 1
+    fi
 fi
 
 # 设置定时任务（如果设置了 SUB_CRON）
