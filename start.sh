@@ -319,73 +319,75 @@ if [ -n "${SUB_URL}" ]; then
     log_info "检测到订阅地址: ${SUB_URL}"
     
     if [ -f "${CONFIG_FILE}" ]; then
-        # 本地有配置：先启动 mihomo，然后通过代理更新订阅
+        # 本地有配置：先尝试直连更新，失败再通过代理更新
         log_info "本地配置文件已存在"
         
-        # 更新 secret（如果设置了 SECRET 环境变量）
-        if [ -n "${SECRET}" ]; then
-            update_secret "${CONFIG_FILE}" "${SECRET}"
-        fi
+        need_start=true
+        config_updated=false
         
-        # 确保 external-controller 配置正确
-        ensure_external_controller "${CONFIG_FILE}"
-        
-        # 先启动 mihomo
-        if start_mihomo; then
-            # 启动成功，等待代理服务就绪
-            log_info "等待代理服务就绪..."
-            sleep 3
-            
-            # 通过本地代理更新订阅
-            log_info "尝试通过代理更新订阅..."
-            if download_subscription "${SUB_URL}" "${CONFIG_FILE}" "true"; then
-                log_info "订阅更新成功，重启以应用新配置..."
-                # 重新更新 secret
-                if [ -n "${SECRET}" ]; then
-                    update_secret "${CONFIG_FILE}" "${SECRET}"
-                fi
-                ensure_external_controller "${CONFIG_FILE}"
-                restart_mihomo
-            else
-                log_warn "订阅更新失败，继续使用当前配置"
-            fi
+        # 1. 先尝试直连下载
+        log_info "尝试直连更新订阅..."
+        if download_subscription "${SUB_URL}" "${CONFIG_FILE}" "false"; then
+            log_info "直连更新成功"
+            config_updated=true
         else
-            # mihomo 启动失败（可能配置有错），尝试直连下载新配置
-            log_warn "mihomo 启动失败，本地配置可能有错误"
-            log_info "尝试直连下载新配置..."
+            log_warn "直连下载失败，尝试通过代理更新..."
             
-            if download_subscription "${SUB_URL}" "${CONFIG_FILE}" "false"; then
-                log_info "直连下载成功，使用新配置启动..."
-                if [ -n "${SECRET}" ]; then
-                    update_secret "${CONFIG_FILE}" "${SECRET}"
-                fi
-                ensure_external_controller "${CONFIG_FILE}"
-                if ! start_mihomo; then
-                    log_error "使用新配置启动 mihomo 仍然失败，请检查订阅配置"
-                    exit 1
-                fi
-            elif [ -n "${DOWNLOAD_PROXY}" ]; then
-                log_info "直连失败，尝试使用外部代理下载..."
+            # 2. 直连失败，启动 mihomo 后通过本地代理下载
+            # 更新 secret（如果设置了 SECRET 环境变量）
+            if [ -n "${SECRET}" ]; then
+                update_secret "${CONFIG_FILE}" "${SECRET}"
+            fi
+            ensure_external_controller "${CONFIG_FILE}"
+            
+            if start_mihomo; then
+                need_start=false
+                log_info "等待代理服务就绪..."
+                sleep 3
+                
+                # 通过本地代理更新订阅
                 if download_subscription "${SUB_URL}" "${CONFIG_FILE}" "true"; then
-                    log_info "通过外部代理下载成功"
-                    if [ -n "${SECRET}" ]; then
-                        update_secret "${CONFIG_FILE}" "${SECRET}"
-                    fi
-                    ensure_external_controller "${CONFIG_FILE}"
-                    if ! start_mihomo; then
-                        log_error "使用新配置启动 mihomo 仍然失败，请检查订阅配置"
+                    log_info "通过代理更新成功，重启以应用新配置..."
+                    config_updated=true
+                else
+                    log_warn "代理下载也失败，继续使用本地配置"
+                fi
+            else
+                # mihomo 启动失败（本地配置有错误）
+                log_error "mihomo 启动失败，本地配置可能有错误"
+                log_error "直连和本地代理都无法更新订阅，无法启动"
+                
+                # 尝试使用外部代理
+                if [ -n "${DOWNLOAD_PROXY}" ]; then
+                    log_info "尝试使用外部代理下载..."
+                    if download_subscription "${SUB_URL}" "${CONFIG_FILE}" "true"; then
+                        log_info "通过外部代理下载成功"
+                        config_updated=true
+                    else
+                        log_error "外部代理下载也失败，无法启动"
                         exit 1
                     fi
                 else
-                    log_error "无法下载新配置，且本地配置有错误，无法启动"
-                    log_error "请手动修复配置文件或检查网络"
+                    log_error "提示：设置 DOWNLOAD_PROXY 环境变量以通过外部代理下载"
                     exit 1
                 fi
-            else
-                log_error "无法下载新配置，且本地配置有错误，无法启动"
-                log_error "提示：设置 DOWNLOAD_PROXY 环境变量以通过外部代理下载"
+            fi
+        fi
+        
+        # 更新 secret 和 external-controller
+        if [ -n "${SECRET}" ]; then
+            update_secret "${CONFIG_FILE}" "${SECRET}"
+        fi
+        ensure_external_controller "${CONFIG_FILE}"
+        
+        # 启动或重启 mihomo
+        if [ "${need_start}" = "true" ]; then
+            if ! start_mihomo; then
+                log_error "mihomo 启动失败，请检查配置文件"
                 exit 1
             fi
+        elif [ "${config_updated}" = "true" ]; then
+            restart_mihomo
         fi
     else
         # 本地无配置：尝试直连下载，失败则尝试使用外部代理
