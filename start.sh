@@ -20,6 +20,59 @@ log_error() {
     echo "[ERROR] $(date '+%Y-%m-%d %H:%M:%S') $1"
 }
 
+# 验证配置文件完整性
+# 返回: 0=有效, 1=无效
+validate_config() {
+    local file="$1"
+    local min_size=1024  # 最小 1KB
+    
+    # 检查文件是否存在且非空
+    if [ ! -s "${file}" ]; then
+        log_error "配置文件为空或不存在"
+        return 1
+    fi
+    
+    # 检查文件大小（至少 1KB）
+    local file_size=$(wc -c < "${file}")
+    if [ "${file_size}" -lt "${min_size}" ]; then
+        log_error "配置文件太小 (${file_size} bytes)，可能不完整"
+        return 1
+    fi
+    
+    # 检查必要的关键字段
+    local has_port=false
+    local has_proxies=false
+    
+    if grep -qE "^port:" "${file}" || grep -qE "^mixed-port:" "${file}"; then
+        has_port=true
+    fi
+    
+    if grep -qE "^proxies:" "${file}"; then
+        has_proxies=true
+    fi
+    
+    if [ "${has_port}" = "false" ]; then
+        log_error "配置文件缺少 port 或 mixed-port 字段"
+        return 1
+    fi
+    
+    if [ "${has_proxies}" = "false" ]; then
+        log_error "配置文件缺少 proxies 字段"
+        return 1
+    fi
+    
+    # 检查文件末尾是否正常（不是被截断的）
+    # 获取最后 10 行，检查是否有内容
+    local last_lines=$(tail -10 "${file}" | grep -v "^$" | wc -l)
+    if [ "${last_lines}" -lt 1 ]; then
+        log_error "配置文件末尾异常，可能被截断"
+        return 1
+    fi
+    
+    log_info "配置文件验证通过 (${file_size} bytes)"
+    return 0
+}
+
 # 下载订阅配置
 # 参数: url, output, [use_proxy: true/false]
 download_subscription() {
@@ -50,17 +103,20 @@ download_subscription() {
     for ((i=1; i<=max_retries; i++)); do
         log_info "下载尝试 $i/$max_retries ..."
         
+        # 清理旧的临时文件
+        rm -f "${temp_file}"
+        
         # 下载到临时文件（使用 /tmp 避免文件被占用）
         if curl -fsSL ${proxy_args} --connect-timeout 60 --max-time 300 --retry 2 --retry-delay 3 -o "${temp_file}" "${url}"; then
-            # 验证下载的文件是否为有效的 YAML
-            if [ -s "${temp_file}" ] && grep -qE "^(port|proxies|proxy-groups):" "${temp_file}"; then
+            # 验证下载的文件完整性
+            if validate_config "${temp_file}"; then
                 # 使用 cp 而不是 mv，避免跨文件系统问题和文件占用问题
                 cp -f "${temp_file}" "${output}"
                 rm -f "${temp_file}"
                 log_info "订阅配置下载成功"
                 return 0
             else
-                log_error "下载的配置文件无效或格式不正确"
+                log_error "下载的配置文件验证失败"
                 rm -f "${temp_file}"
             fi
         else
