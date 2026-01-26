@@ -215,7 +215,6 @@ log-level: info
 
 # Dashboard 必需配置
 external-controller: 0.0.0.0:9090
-secret: ''
 
 proxies:
   - name: '节点名称'
@@ -264,8 +263,8 @@ https://docker.apiba.cn
 
 ## 版本信息
 
-- **Mihomo**: v1.19.18
-- **MetacubexD**: v1.186.1
+- **Mihomo**: v1.19.19
+- **MetacubexD**: v1.236.0
 - **架构**: linux/amd64, linux/arm64
 
 ## 致谢
