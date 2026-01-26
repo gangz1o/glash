@@ -1,11 +1,10 @@
 # glash
 
-🚀 基于最新 **Mihomo v1.19.18** 内核 + **MetacubexD** Dashboard 的 Clash Docker 镜像
-
+🚀 基于最新 **Mihomo** 内核，内置 Dashboard 的 Clash Docker 镜像
 
 ## 特性
 
-- ✅ Mihomo (Clash Meta) v1.19.18 内核
+- ✅ Mihomo (Clash Meta)最新内核
 - ✅ MetacubexD Web Dashboard 内置
 - ✅ 预打包 GeoIP 数据库，无需运行时下载
 - ✅ 支持 amd64 / arm64 架构
@@ -15,18 +14,18 @@
 
 ## 支持的协议
 
-| 协议 | 说明 |
-| ---- | ---- |
-| Shadowsocks (SS) | 经典轻量级加密代理 |
-| VMess | V2Ray 原生协议 |
-| VLESS | V2Ray 轻量协议，性能更优 |
-| Trojan | 基于 TLS 的隐蔽协议 |
-| Hysteria | 基于 QUIC 的高速协议 |
-| Hysteria2 | Hysteria 第二代，更快更稳 |
-| TUIC | 基于 QUIC 的多路复用协议 |
-| WireGuard | 现代化 VPN 协议 |
-| HTTP | HTTP/HTTPS 代理 |
-| SOCKS5 | 通用 SOCKS5 代理 |
+| 协议             | 说明                      |
+| ---------------- | ------------------------- |
+| Shadowsocks (SS) | 经典轻量级加密代理        |
+| VMess            | V2Ray 原生协议            |
+| VLESS            | V2Ray 轻量协议，性能更优  |
+| Trojan           | 基于 TLS 的隐蔽协议       |
+| Hysteria         | 基于 QUIC 的高速协议      |
+| Hysteria2        | Hysteria 第二代，更快更稳 |
+| TUIC             | 基于 QUIC 的多路复用协议  |
+| WireGuard        | 现代化 VPN 协议           |
+| HTTP             | HTTP/HTTPS 代理           |
+| SOCKS5           | 通用 SOCKS5 代理          |
 
 ## 快速开始
 
@@ -126,11 +125,11 @@ docker pull --platform linux/arm64 gangz1o/glash:latest
 
 ### 环境变量
 
-| 变量 | 说明 | 示例 |
-| ---- | ---- | ---- |
-| `SUB_URL` | 订阅地址，支持返回 Clash 配置的链接 | `https://example.com/sub` |
-| `SUB_CRON` | 自动更新的 cron 表达式 | `0 */6 * * *` |
-| `SECRET` | Dashboard 登录密钥，会自动注入配置 | `my-password` |
+| 变量             | 说明                                 | 示例                      |
+| ---------------- | ------------------------------------ | ------------------------- |
+| `SUB_URL`        | 订阅地址，支持返回 Clash 配置的链接  | `https://example.com/sub` |
+| `SUB_CRON`       | 自动更新的 cron 表达式               | `0 */6 * * *`             |
+| `SECRET`         | Dashboard 登录密钥，会自动注入配置   | `my-password`             |
 | `DOWNLOAD_PROXY` | 首次下载订阅时使用的外部代理（可选） | `http://192.168.1.1:7890` |
 
 ### 工作逻辑
@@ -159,13 +158,13 @@ docker pull --platform linux/arm64 gangz1o/glash:latest
 
 ### 常用 Cron 表达式
 
-| 表达式 | 说明 |
-| ------ | ---- |
-| `0 */6 * * *` | 每 6 小时更新 |
-| `0 0 * * *` | 每天凌晨更新 |
-| `0 */12 * * *` | 每 12 小时更新 |
-| `*/30 * * * *` | 每 30 分钟更新 |
-| `0 8 * * *` | 每天早上 8 点更新 |
+| 表达式         | 说明              |
+| -------------- | ----------------- |
+| `0 */6 * * *`  | 每 6 小时更新     |
+| `0 0 * * *`    | 每天凌晨更新      |
+| `0 */12 * * *` | 每 12 小时更新    |
+| `*/30 * * * *` | 每 30 分钟更新    |
+| `0 8 * * *`    | 每天早上 8 点更新 |
 
 ### 查看订阅更新日志
 
@@ -198,7 +197,7 @@ secret: ''
 ## Dashboard 访问
 
 启动后访问：http://127.0.0.1:9090/ui/
-![h1FjVgrMZpnADJ70Tp5wjzp3KloXMkvB.webp](https://cdn.nodeimage.com/i/h1FjVgrMZpnADJ70Tp5wjzp3KloXMkvB.webp)
+![5Q9E9uQk9j6x9tkCSMu9MDxY56MYklUg.webp](https://cdn.nodeimage.com/i/5Q9E9uQk9j6x9tkCSMu9MDxY56MYklUg.webp)
 
 首次访问需要配置：
 
@@ -236,14 +235,17 @@ rules:
   - GEOIP,CN,DIRECT
   - MATCH,🚀 节点选择
 ```
+
 ## 界面一览
-![NUhSXxFpzP5AkQgOM0F5SaCOYEdUOMpG.webp](https://cdn.nodeimage.com/i/NUhSXxFpzP5AkQgOM0F5SaCOYEdUOMpG.webp)
-![dIMBzYuhfUcBZ9pml6p8SK6dCK7fcZAK.webp](https://cdn.nodeimage.com/i/dIMBzYuhfUcBZ9pml6p8SK6dCK7fcZAK.webp)
-![qNyg0qN1s0yAKK2VDwmzUFznng39WrHN.webp](https://cdn.nodeimage.com/i/qNyg0qN1s0yAKK2VDwmzUFznng39WrHN.webp)
-![LYlfD2Av4Pryg1y3bcBCjrQZ7NQdjkSU.webp](https://cdn.nodeimage.com/i/LYlfD2Av4Pryg1y3bcBCjrQZ7NQdjkSU.webp)
-![hNFus4r6SRr5gP7sz0oZcgcEITN9NaZO.webp](https://cdn.nodeimage.com/i/hNFus4r6SRr5gP7sz0oZcgcEITN9NaZO.webp)
+
+![kWcCiiHfK3fmyFWQaC6Ndkh0vnfLj0lP.webp](https://cdn.nodeimage.com/i/kWcCiiHfK3fmyFWQaC6Ndkh0vnfLj0lP.webp)
+![vA3jgJCQmhsLNVqoNWj8cKvqovJmX4QK.webp](https://cdn.nodeimage.com/i/vA3jgJCQmhsLNVqoNWj8cKvqovJmX4QK.webp)
+![zDENCwikV4ZKAxrBwPjKsj3MXUYTpxiR.webp](https://cdn.nodeimage.com/i/zDENCwikV4ZKAxrBwPjKsj3MXUYTpxiR.webp)
+![zDENCwikV4ZKAxrBwPjKsj3MXUYTpxiR.webp](https://cdn.nodeimage.com/i/zDENCwikV4ZKAxrBwPjKsj3MXUYTpxiR.webp)
+![gvdOcbUtUASmKtlfKY7crcokkIQYY0nM.webp](https://cdn.nodeimage.com/i/gvdOcbUtUASmKtlfKY7crcokkIQYY0nM.webp)
 
 ### 一些可用docker加速源
+
 ```bash
 https://docker.1ms.run
 https://docker.kejilion.pro
