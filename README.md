@@ -32,6 +32,23 @@
 
 glash 支持两种使用模式：**订阅模式**（推荐）和**本地配置模式**。
 
+### 一些可用docker加速源
+```bash
+https://docker.1ms.run
+https://docker.kejilion.pro
+https://docker-registry.nmqu.com
+https://docker.xuanyuan.me
+https://dockerproxy.net
+https://hub.rat.dev
+https://hub1.nat.tf
+https://hub2.nat.tf
+https://hub3.nat.tf
+https://hub4.nat.tf
+https://mirror.iscas.ac.cn
+https://docker.hpcloud.cloud
+https://docker.apiba.cn
+```
+
 ### 模式一：订阅模式（推荐）
 
 自动从订阅链接下载配置，支持定时更新，无需手动维护配置文件。
