@@ -58,7 +58,7 @@ services:
   glash:
     image: gangz1o/glash:latest
     container_name: glash
-    restart: unless-stopped
+    restart: always
     ports:
       - '7890:7890' # HTTP 代理
       - '7891:7891' # SOCKS5 代理
@@ -81,7 +81,7 @@ services:
 ```bash
 docker run -d \
   --name glash \
-  --restart unless-stopped \
+  --restart always \
   -p 7890:7890 \
   -p 7891:7891 \
   -p 9090:9090 \
@@ -96,7 +96,7 @@ services:
   glash:
     image: gangz1o/glash:latest
     container_name: glash
-    restart: unless-stopped
+    restart: always
     ports:
       - '7890:7890' # HTTP 代理
       - '7891:7891' # SOCKS5 代理
@@ -263,8 +263,8 @@ https://docker.apiba.cn
 
 ## 版本信息
 
-- **Mihomo**: v1.19.19
-- **MetacubexD**: v1.236.0
+- **Mihomo**: v1.19.20
+- **MetacubexD**: v1.243.0
 - **架构**: linux/amd64, linux/arm64
 
 ## 致谢
