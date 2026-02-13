@@ -1,11 +1,8 @@
-name: Build and Push Docker Image
+name: Build and Push Docker Image on Release
 
 on:
-  push:
-    branches:
-      - master
-  # 允许手动触发
-  workflow_dispatch:
+  release:
+    types: [published]  # 核心：监听手动发布Release的动作
 
 env:
   REGISTRY: docker.io
@@ -15,56 +12,25 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 获取所有历史和 tags
+          ref: ${{ github.event.release.tag_name }}  # 关键：检出这个特定Tag的代码
+          fetch-depth: 0
 
-      - name: Get latest tag and calculate next version
+      - name: Extract version from Release Tag
         id: version
         run: |
-          # 获取最新的 tag（按版本排序）
-          LATEST_TAG=$(git tag -l 'v*' --sort=-v:refname | head -n 1)
-          
-          if [ -z "$LATEST_TAG" ]; then
-            # 如果没有 tag，从 v1.0.0 开始
-            NEW_VERSION="1.0.0"
-          else
-            # 移除 v 前缀
-            VERSION=${LATEST_TAG#v}
-            
-            # 分割版本号
-            IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-            
-            # 递增 patch 版本，逢 9 进 1
-            PATCH=$((PATCH + 1))
-            if [ $PATCH -gt 9 ]; then
-              PATCH=0
-              MINOR=$((MINOR + 1))
-              if [ $MINOR -gt 9 ]; then
-                MINOR=0
-                MAJOR=$((MAJOR + 1))
-              fi
-            fi
-            
-            NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
-          fi
-          
-          echo "Latest tag: $LATEST_TAG"
-          echo "New version: v$NEW_VERSION"
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          NEW_VERSION="${RELEASE_TAG#v}"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "new_tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "new_tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
 
-      - name: Create and push new tag
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a ${{ steps.version.outputs.new_tag }} -m "Release ${{ steps.version.outputs.new_tag }}"
-          git push origin ${{ steps.version.outputs.new_tag }}
+      # 注意：这里删除了原来的 'Create and push new tag' 步骤
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -87,7 +53,6 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.new_version }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.new_tag }}
           labels: |
             org.opencontainers.image.version=${{ steps.version.outputs.new_version }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
