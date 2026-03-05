@@ -272,7 +272,7 @@ https://docker.apiba.cn
 ## 版本信息
 
 - **Mihomo**: v1.19.20
-- **MetacubexD**: v1.241.1
+- **MetacubexD**: v1.241.3
 - **架构**: linux/amd64, linux/arm64
 
 ## 致谢
