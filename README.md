@@ -7,6 +7,28 @@
 
 基于 [Mihomo](https://github.com/MetaCubeX/mihomo) 内核、内置 [MetacubexD](https://github.com/MetaCubeX/metacubexd) Dashboard 的多架构 Docker 镜像。
 
+<!-- DolOffer 赞助广告开始 -->
+<div align="center">
+  <table border="0">
+    <tr>
+      <td align="center" bgcolor="#f6f8fa" style="padding: 20px; border-radius: 8px; border: 1px solid #d0d7de;">
+        <a href="https://doloffer.com" target="_blank">
+          <img src="https://cdn.nodeimage.com/i/MbENUNiyjRdvIRrt0GjLTv6mhi41zPO0.webp" alt="DolOffer Logo" height="160"/>
+        </a>
+        <p align="left" style="font-size: 15px; color: #24292f; margin: 10px 0;">
+          全网超划算的 <b>ChatGPT Plus / Claude Pro</b> 会员充值平台。多通道稳定续费，售后无忧。
+        </p>
+        <p align="left" style="font-size: 14px; color: #57606a;">
+          🎁 专属 <b>9 折</b> 优惠码：<code>ai8888</code><br>
+          🔗 <a href="https://doloffer.com" target="_blank"><b>DolOffer 官方网站</b></a> ｜ <a href="https://github.com/doloffer-g/guide" target="_blank"><b>使用指南</b></a>
+        </p>
+      </td>
+    </tr>
+  </table>
+</div>
+<!-- DolOffer 赞助广告结束 -->
+
+
 项目同时支持远程订阅和本地配置。订阅下载后会先在候选文件中完成环境变量覆写、自定义 Hook 和 Mihomo 原生校验；全部成功才替换当前配置。定时更新使用 Controller 热加载，失败时保留或恢复旧配置，不会为了更新订阅主动重启容器。
 
 快速导航：[订阅模式](#快速开始订阅模式) · [本地配置](#本地配置模式) · [环境变量](#环境变量) · [订阅更新](#订阅更新机制) · [TUN](#tun-模式) · [自定义 Hook](#订阅后自定义-hook) · [故障排查](#故障排查) · [升级](#升级与版本固定)
@@ -655,26 +677,6 @@ Pull Request 会运行 Shell 测试、AMD64 容器烟雾测试和多架构构建
 - [Mihomo](https://github.com/MetaCubeX/mihomo)
 - [MetacubexD](https://github.com/MetaCubeX/metacubexd)
 
-<!-- DolOffer 赞助广告开始 -->
-<div align="center">
-  <table border="0">
-    <tr>
-      <td align="center" bgcolor="#f6f8fa" style="padding: 20px; border-radius: 8px; border: 1px solid #d0d7de;">
-        <a href="https://doloffer.com" target="_blank">
-          <img src="https://cdn.nodeimage.com/i/MbENUNiyjRdvIRrt0GjLTv6mhi41zPO0.webp" alt="DolOffer Logo" height="160"/>
-        </a>
-        <p align="left" style="font-size: 15px; color: #24292f; margin: 10px 0;">
-          全网超划算的 <b>ChatGPT Plus / Claude Pro</b> 会员充值平台。多通道稳定续费，售后无忧。
-        </p>
-        <p align="left" style="font-size: 14px; color: #57606a;">
-          🎁 专属 <b>9 折</b> 优惠码：<code>ai8888</code><br>
-          🔗 <a href="https://doloffer.com" target="_blank"><b>DolOffer 官方网站</b></a> ｜ <a href="https://github.com/doloffer-g/guide" target="_blank"><b>使用指南</b></a>
-        </p>
-      </td>
-    </tr>
-  </table>
-</div>
-<!-- DolOffer 赞助广告结束 -->
 
 ## License
 
